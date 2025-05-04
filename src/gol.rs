@@ -1,0 +1,105 @@
+//! Module to hold logic for the Game of Life simulation.
+
+/// Enum to represent each cell in the Game of Life world.
+/// Each cell can only either be alive or dead, and this
+/// is codified by only having the two enum variants.
+#[derive(Copy, Clone, PartialEq, Default)]
+pub enum Cell {
+    #[default]
+    Dead,
+    Alive,
+}
+
+
+
+/// Main Game of Life simulation struct.
+pub struct GameOfLife {
+    regions: Vec<Region>
+}
+
+impl GameOfLife {
+    /// Create a new empty world.
+    pub fn new() -> GameOfLife {
+        !unimplemented!()
+    }
+
+    /// Step the simulation to the next state.
+    pub fn step(&mut self) {
+        !unimplemented!()
+        // Step each region
+        // Split Regions that have disjoint cells
+        // Merge regions that are too close
+    }
+
+    /// Get the state of the cell at the given x y coordinates.
+    pub fn get_cell(&self, x: isize, y: isize) -> Cell {
+        !unimplemented!()
+    }
+
+    /// Populate the provided region with the state of the current world.
+    pub fn populate_region(&self, region: &mut Region) {
+        !unimplemented!()
+    }
+
+    /// Set the state of the world to that of the given region.
+    pub fn set_region(&mut self, region: &Region) {
+        !unimplemented!()
+    }
+}
+
+
+
+/// Structure to hold the state of a 2D region of a Game of Life world.
+/// The x y position is the -x -y corner of the region,
+/// and the width and height are always positive, growing in the positive x and y direction.
+pub struct Region {
+    x: isize,
+    y: isize,
+    width: usize,
+    height: usize,
+    state: Vec<Vec<Cell>>
+}
+
+impl Region {
+    /// Create a new all dead region.
+    pub fn new(x: isize, y: isize, width: usize, height: usize) -> Region {
+        !unimplemented!()
+    }
+
+    /// Set the state of a specific cell.
+    /// The x y position is in world coordinates, not the local coordinates of the region.
+    pub fn set_cell(&mut self, x: isize, y: isize, state: Cell) {
+        !unimplemented!()
+    }
+
+    /// Adjust the width or height of the region.
+    /// New space is filled with dead cells, while reducing the size truncates the cells.
+    /// If adjusting the -x or -y edges, the position will be adjusted accordingly.
+    pub fn adjust_edge(&mut self, edge: Edge, amount: isize) {
+        !unimplemented!()
+    }
+
+    /// Move the region by the given amount in the x and y directions.
+    /// New cells will be filled with dead cells, and old cells will be truncated.
+    pub fn move_region(&mut self, x: isize, y: isize) {
+        !unimplemented!()
+    }
+
+    // GETTERS
+    // Can't just make members public as there are invariants with the vec to maintain.
+    pub fn x(&self) -> isize { self.x }
+    pub fn y(&self) -> isize { self.y }
+    pub fn width(&self) -> usize { self.width }
+    pub fn height(&self) -> usize { self.height }
+    pub fn state(&self) -> &Vec<Vec<Cell>> { &self.state }
+}
+
+
+
+/// Different edges of a region.
+pub enum Edge {
+    X,
+    Y,
+    NegX,
+    NegY
+}
