@@ -101,11 +101,73 @@ impl Region {
         self.state[x][y] = state;
     }
 
-    /// Adjust the width or height of the region.
+    /// Change the size of the region by moving the specified edge.
+    /// The amount value is the change in size, not position of the chosen edge.
+    /// As such, a positive value even on a negative edge (such as NegX or NegY)
+    /// will result in them moving further in the negative direction.
     /// New space is filled with dead cells, while reducing the size truncates the cells.
     /// If adjusting the -x or -y edges, the position will be adjusted accordingly.
-    pub fn adjust_edge(&mut self, edge: Edge, amount: isize) {
-        !unimplemented!()
+    pub fn adjust_size(&mut self, edge: Edge, amount: isize) {
+        // Adjust size and position values
+        match edge {
+            Edge::X => self.width = self.width.saturating_add_signed(amount),
+            Edge::Y => self.height = self.height.saturating_add_signed(amount),
+            Edge::NegX => {
+                self.width = self.width.saturating_add_signed(amount);
+                self.x -= amount;
+            }
+            Edge::NegY => {
+                self.height = self.height.saturating_add_signed(amount);
+                self.y -= amount;
+            }
+        }
+
+        // Adjust state buffer
+        match edge {
+            // Add/remove from the end of the outer vec
+            Edge::X => {
+                self.state.resize(self.width, vec![Cell::Dead; self.height]);
+            }
+
+            // Add/remove from the end of each internal vec
+            Edge::Y => {
+                for column in &mut self.state {
+                    column.resize(self.height, Cell::Dead)
+                }
+            }
+
+            // Add/remove from the start of the outer vec
+            Edge::NegX => {
+                // Adding extra on the left edge
+                if amount >= 0 {
+                    self.state.resize(self.width, vec![Cell::Dead]);
+                    self.state.as_mut_slice().rotate_right(amount as usize)
+                }
+                // Removing on the left edge
+                else {
+                    self.state.as_mut_slice().rotate_left((amount*-1) as usize);
+                    self.state.resize(self.width, vec![])
+                }
+            }
+
+            // Add/remove from the start of the inner vecs
+            Edge::NegY => {
+                // Adding extra on the bottom edge
+                if amount >= 0 {
+                    for column in &mut self.state {
+                        column.resize(self.height, Cell::Dead);
+                        column.as_mut_slice().rotate_right(amount as usize)
+                    }
+                }
+                // Removing on the bottom edge
+                else {
+                    for column in &mut self.state {
+                        column.as_mut_slice().rotate_left((amount*-1) as usize);
+                        column.resize(self.width, Cell::Dead)
+                    }
+                }
+            }
+        }
     }
 
     /// Move the region by the given amount in the x and y directions.
@@ -187,6 +249,59 @@ mod region_tests {
         assert_eq!(Cell::Alive, region.state[0][10]);
         region.set_cell(2, -4, Cell::Alive);
         assert_eq!(Cell::Alive, region.state[7][1]);
+    }
+
+    #[test]
+    fn adjust_size() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let mut region = Region::new(-5, -5, 11, 11);
+        // Make all cells alive so we can see the new cells being dead
+        for x in -5..=5 {
+            for y in -5..=5 {
+                region.set_cell(x, y, Cell::Alive)
+            }
+        }
+
+        // +X edge
+        region.adjust_size(Edge::X, 3);
+        assert_eq!(14, region.width);
+        assert_eq!(14, region.state.len());
+        for column in &mut region.state[11..] {
+            for cell in column {
+                assert_eq!(*cell, Cell::Dead);
+                *cell = Cell::Alive // Fill new space with alive cells for following checks
+            }
+        }
+
+        // +Y edge
+        region.adjust_size(Edge::Y, -2);
+        assert_eq!(9, region.height);
+        for column in &region.state {
+            assert_eq!(9, column.len());
+            for cell in column {
+                assert_eq!(*cell, Cell::Alive)
+            }
+        }
+
+        // -X edge
+        region.adjust_size(Edge::NegX, -2);
+        assert_eq!(12, region.width);
+        assert_eq!(12, region.state.len());
+        for column in &region.state {
+            for cell in column {
+                assert_eq!(*cell, Cell::Alive)
+            }
+        }
+
+        // -Y edge
+        region.adjust_size(Edge::NegY, 5);
+        assert_eq!(14, region.height);
+        for column in &region.state {
+            assert_eq!(14, column.len());
+            for cell in &column[0..5] {
+                assert_eq!(*cell, Cell::Dead)
+            }
+        }
     }
 }
 
