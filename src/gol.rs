@@ -84,8 +84,15 @@ impl Region {
         true
     }
 
+    /// Turn world coordinates into local coordinates within this region's internal buffer.
+    fn pos_to_local(&self, x: isize, y: isize) -> Option<(usize, usize)> {
+        if !self.pos_in_bounds(x, y) { return None }
+        Some(((x-self.x) as usize, (y-self.y) as usize))
+    }
+
     /// Set the state of a specific cell.
     /// The x y position is in world coordinates, not the local coordinates of the region.
+    /// If the x y position is outside this region, this function will fail silently.
     pub fn set_cell(&mut self, x: isize, y: isize, state: Cell) {
         !unimplemented!()
     }
@@ -136,6 +143,22 @@ mod region_tests {
         assert!(!region.pos_in_bounds(5, -6));
         assert!(!region.pos_in_bounds(-6, 6));
         assert!(!region.pos_in_bounds(-5, -6));
+    }
+
+    #[test]
+    fn pos_to_local() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let region = Region::new(-5, -5, 11, 11);
+
+        // Outside region
+        assert_eq!(None, region.pos_to_local(6, 5));
+        assert_eq!(None, region.pos_to_local(10, -3));
+        assert_eq!(None, region.pos_to_local(-2, 6));
+
+        // Inside region
+        assert_eq!(Some((0, 0)), region.pos_to_local(-5, -5));
+        assert_eq!(Some((10, 10)), region.pos_to_local(5, 5));
+        assert_eq!(Some((8, 3)), region.pos_to_local(3, -2));
     }
 }
 
