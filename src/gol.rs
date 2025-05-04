@@ -89,14 +89,18 @@ impl Region {
 
     /// Check if a position is in the bounds of this region.
     fn pos_in_bounds(&self, x: isize, y: isize) -> bool {
-        if x < self.x { return false };
-        if y < self.y { return false };
+        if x < self.x { return false }
+        if y < self.y { return false }
+
         if let Some(num) = self.x.checked_add_unsigned(self.width) {
             if x >= num { return false }
-        } else { return false }
+        }
+        else { return false }
+
         if let Some(num) = self.y.checked_add_unsigned(self.height) {
             if y >= num { return false }
-        } else { return false }
+        }
+        else { return false }
 
         // All bound checks passed
         true
