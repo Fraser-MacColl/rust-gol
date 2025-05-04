@@ -69,6 +69,21 @@ impl Region {
         }
     }
 
+    /// Check if a position is in the bounds of this region.
+    fn pos_in_bounds(&self, x: isize, y: isize) -> bool {
+        if x < self.x { return false };
+        if y < self.y { return false };
+        if let Some(num) = self.x.checked_add_unsigned(self.width) {
+            if x >= num { return false }
+        } else { return false }
+        if let Some(num) = self.y.checked_add_unsigned(self.height) {
+            if y >= num { return false }
+        } else { return false }
+
+        // All bound checks passed
+        true
+    }
+
     /// Set the state of a specific cell.
     /// The x y position is in world coordinates, not the local coordinates of the region.
     pub fn set_cell(&mut self, x: isize, y: isize, state: Cell) {
@@ -95,6 +110,33 @@ impl Region {
     pub fn width(&self) -> usize { self.width }
     pub fn height(&self) -> usize { self.height }
     pub fn state(&self) -> &Vec<Vec<Cell>> { &self.state }
+}
+
+#[cfg(test)]
+mod region_tests {
+    use super::*;
+
+    #[test]
+    fn pos_in_bounds() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let region = Region::new(-5, -5, 11, 11);
+
+        // In bounds
+        assert!(region.pos_in_bounds(0, 0));
+        assert!(region.pos_in_bounds(-3, 2));
+        assert!(region.pos_in_bounds(-5, 5));
+        assert!(region.pos_in_bounds(-5, -5));
+        assert!(region.pos_in_bounds(5, 5));
+        assert!(region.pos_in_bounds(5, -5));
+
+        // Out of bounds
+        assert!(!region.pos_in_bounds(15, 4));
+        assert!(!region.pos_in_bounds(0, 8));
+        assert!(!region.pos_in_bounds(6, 5));
+        assert!(!region.pos_in_bounds(5, -6));
+        assert!(!region.pos_in_bounds(-6, 6));
+        assert!(!region.pos_in_bounds(-5, -6));
+    }
 }
 
 
