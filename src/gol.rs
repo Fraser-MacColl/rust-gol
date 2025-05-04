@@ -173,7 +173,40 @@ impl Region {
     /// Move the region by the given amount in the x and y directions.
     /// New cells will be filled with dead cells, and old cells will be truncated.
     pub fn move_region(&mut self, x: isize, y: isize) {
-        !unimplemented!()
+        // X movement
+        self.x += x;
+        if x < 0 {
+            let x = (x*-1) as usize;
+            self.state.as_mut_slice().rotate_right(x);
+            for column in &mut self.state[0..x] {
+                *column = vec![Cell::Dead; self.height];
+            }
+        }
+        else {
+            let x = x as usize;
+            self.state.as_mut_slice().rotate_left(x);
+            for column in &mut self.state[self.width - x..] {
+                *column = vec![Cell::Dead; self.height];
+            }
+        }
+
+        // Y Movement
+        self.y += y;
+        if y < 0 {
+            // Shadow to avoid duplicate code
+            let y = (y*-1) as usize;
+            for column in &mut self.state {
+                column.as_mut_slice().rotate_right(y);
+                column.splice(0..y, vec![Cell::Dead; y]);
+            }
+        }
+        else {
+            let y = y as usize;
+            for column in &mut self.state {
+                column.as_mut_slice().rotate_left(y);
+                column.splice((self.height-y).., vec![Cell::Dead; y]);
+            }
+        }
     }
 
     // GETTERS
@@ -300,6 +333,53 @@ mod region_tests {
             assert_eq!(14, column.len());
             for cell in &column[0..5] {
                 assert_eq!(*cell, Cell::Dead)
+            }
+        }
+    }
+
+    #[test]
+    fn move_region() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let mut region = Region::new(-5, -5, 11, 11);
+        // Make all cells alive so we can see the new cells being dead
+        for x in -5..=5 {
+            for y in -5..=5 {
+                region.set_cell(x, y, Cell::Alive)
+            }
+        }
+
+        region.move_region(2, 1);
+        assert_eq!(-3, region.x);
+        assert_eq!(-4, region.y);
+        for column in &mut region.state[region.width-2..] {
+            for cell in column {
+                assert_eq!(Cell::Dead, *cell);
+                *cell = Cell::Alive;
+            }
+        }
+        for column in &mut region.state[..region.width-2] {
+            for cell in &column[0..region.height-1] {
+                assert_eq!(Cell::Alive, *cell);
+            }
+            assert_eq!(Cell::Dead, *column.last().unwrap());
+            *column.last_mut().unwrap() = Cell::Alive;
+        }
+
+        region.move_region(-4, -3);
+        assert_eq!(-7, region.x);
+        assert_eq!(-7, region.y);
+        for column in &mut region.state[..4] {
+            for cell in column {
+                assert_eq!(Cell::Dead, *cell);
+                *cell = Cell::Alive;
+            }
+        }
+        for column in &region.state[4..] {
+            for cell in &column[..3] {
+                assert_eq!(Cell::Dead, *cell);
+            }
+            for cell in &column[3..] {
+                assert_eq!(Cell::Alive, *cell);
             }
         }
     }
