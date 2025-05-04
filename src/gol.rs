@@ -3,7 +3,7 @@
 /// Enum to represent each cell in the Game of Life world.
 /// Each cell can only either be alive or dead, and this
 /// is codified by only having the two enum variants.
-#[derive(Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Cell {
     #[default]
     Dead,
@@ -94,7 +94,11 @@ impl Region {
     /// The x y position is in world coordinates, not the local coordinates of the region.
     /// If the x y position is outside this region, this function will fail silently.
     pub fn set_cell(&mut self, x: isize, y: isize, state: Cell) {
-        !unimplemented!()
+        if !self.pos_in_bounds(x, y) { return }
+        let Some((x, y)) = self.pos_to_local(x, y)
+        else { return };
+
+        self.state[x][y] = state;
     }
 
     /// Adjust the width or height of the region.
@@ -159,6 +163,30 @@ mod region_tests {
         assert_eq!(Some((0, 0)), region.pos_to_local(-5, -5));
         assert_eq!(Some((10, 10)), region.pos_to_local(5, 5));
         assert_eq!(Some((8, 3)), region.pos_to_local(3, -2));
+    }
+
+    #[test]
+    fn set_cell() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let mut region = Region::new(-5, -5, 11, 11);
+
+        // Outside region
+        region.set_cell(-6, 3, Cell::Alive);
+        region.set_cell(2, 6, Cell::Alive);
+        region.set_cell(-5, 6, Cell::Alive);
+        for column in &region.state {
+            for cell in column {
+                assert_eq!(Cell::Dead, *cell);
+            }
+        }
+
+        // Inside region
+        region.set_cell(5, -5, Cell::Alive);
+        assert_eq!(Cell::Alive, region.state[10][0]);
+        region.set_cell(-5, 5, Cell::Alive);
+        assert_eq!(Cell::Alive, region.state[0][10]);
+        region.set_cell(2, -4, Cell::Alive);
+        assert_eq!(Cell::Alive, region.state[7][1]);
     }
 }
 
