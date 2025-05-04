@@ -63,7 +63,10 @@ pub struct Region {
 impl Region {
     /// Create a new all dead region.
     pub fn new(x: isize, y: isize, width: usize, height: usize) -> Region {
-        !unimplemented!()
+        Region {
+            x, y, width, height,
+            state: vec![vec![Cell::Dead; height]; width]
+        }
     }
 
     /// Set the state of a specific cell.
