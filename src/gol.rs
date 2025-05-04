@@ -31,6 +31,14 @@ impl GameOfLife {
         // Merge regions that are too close
     }
 
+    /// Check if a position is contained within a region of this world.
+    fn pos_in_bounds(&self, x: isize, y: isize) -> bool {
+        for region in &self.regions {
+            if region.pos_in_bounds(x, y) { return true }
+        }
+        false
+    }
+
     /// Get the state of the cell at the given x y coordinates.
     pub fn get_cell(&self, x: isize, y: isize) -> Cell {
         !unimplemented!()
@@ -44,6 +52,16 @@ impl GameOfLife {
     /// Set the state of the world to that of the given region.
     pub fn set_region(&mut self, region: &Region) {
         !unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod game_of_life_tests {
+    use super::*;
+
+    #[test]
+    fn pos_in_bounds() {
+        // TODO
     }
 }
 
