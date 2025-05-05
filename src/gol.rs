@@ -114,6 +114,13 @@ impl Region {
         Some(((x-self.x) as usize, (y-self.y) as usize))
     }
 
+    /// Returns the state of the cell at the given coordinates.
+    /// If the position is outside of this region, returns [`None`].
+    pub fn get_cell(&self, x: isize, y: isize) -> Option<Cell> {
+        let (x, y) = self.pos_to_local(x, y)?;
+        Some(self.state[x][y])
+    }
+
     /// Set the state of a specific cell.
     /// The x y position is in world coordinates, not the local coordinates of the region.
     /// If the x y position is outside this region, this function will fail silently.
@@ -239,7 +246,6 @@ impl Region {
     pub fn y(&self) -> isize { self.y }
     pub fn width(&self) -> usize { self.width }
     pub fn height(&self) -> usize { self.height }
-    pub fn state(&self) -> &Vec<Vec<Cell>> { &self.state }
 }
 
 #[cfg(test)]
@@ -282,6 +288,24 @@ mod region_tests {
         assert_eq!(Some((0, 0)), region.pos_to_local(-5, -5));
         assert_eq!(Some((10, 10)), region.pos_to_local(5, 5));
         assert_eq!(Some((8, 3)), region.pos_to_local(3, -2));
+    }
+
+    #[test]
+    fn get_cell() {
+        // Region going from (-5, -5) up to (5, 5) inclusive
+        let region = Region::new(-5, -5, 11, 11);
+
+        // Inbounds
+        assert_eq!(Some(Cell::Dead), region.get_cell(-5, -5));
+        assert_eq!(Some(Cell::Dead), region.get_cell(5, 5));
+        assert_eq!(Some(Cell::Dead), region.get_cell(3, -2));
+        assert_eq!(Some(Cell::Dead), region.get_cell(-0, 1));
+
+        // Out of bounds
+        assert_eq!(None, region.get_cell(-6, 5));
+        assert_eq!(None, region.get_cell(9, 0));
+        assert_eq!(None, region.get_cell(5, 6));
+        assert_eq!(None, region.get_cell(0, -6));
     }
 
     #[test]
