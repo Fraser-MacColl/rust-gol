@@ -20,7 +20,9 @@ pub struct GameOfLife {
 impl GameOfLife {
     /// Create a new empty world.
     pub fn new() -> GameOfLife {
-        !unimplemented!()
+        GameOfLife {
+            regions: vec![]
+        }
     }
 
     /// Step the simulation to the next state.
