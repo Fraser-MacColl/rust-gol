@@ -134,10 +134,10 @@ impl Region {
 
     /// Change the size of the region by moving the specified edge.
     /// The amount value is the change in size, not position of the chosen edge.
-    /// As such, a positive value even on a negative edge (such as NegX or NegY)
+    /// As such, a positive value even on a negative edge (such as [`Edge::NegX`] or [`Edge::NegY`])
     /// will result in them moving further in the negative direction.
-    /// New space is filled with dead cells, while reducing the size truncates the cells.
-    /// If adjusting the -x or -y edges, the position will be adjusted accordingly.
+    /// New space is filled with [`Cell::Dead`], while reducing the size truncates the cells.
+    /// If adjusting the edges [`Edge::NegX`] or [`Edge::NegY`], the position will be adjusted accordingly.
     pub fn adjust_size(&mut self, edge: Edge, amount: isize) {
         // Adjust size and position values
         match edge {
@@ -202,7 +202,7 @@ impl Region {
     }
 
     /// Move the region by the given amount in the x and y directions.
-    /// New cells will be filled with dead cells, and old cells will be truncated.
+    /// New cells will be filled with [`Cell::Dead`], and old cells will be truncated.
     pub fn move_region(&mut self, x: isize, y: isize) {
         // X movement
         self.x += x;
