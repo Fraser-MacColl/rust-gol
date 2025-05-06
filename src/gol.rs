@@ -43,7 +43,12 @@ impl GameOfLife {
 
     /// Get the state of the cell at the given x y coordinates.
     pub fn get_cell(&self, x: isize, y: isize) -> Cell {
-        !unimplemented!()
+        for region in &self.regions {
+            if let Some(state) = region.get_cell(x, y) {
+                return state;
+            }
+        }
+        Cell::Dead
     }
 
     /// Populate the provided region with the state of the current world.
@@ -63,6 +68,11 @@ mod game_of_life_tests {
 
     #[test]
     fn pos_in_bounds() {
+        // TODO
+    }
+
+    #[test]
+    fn get_cell() {
         // TODO
     }
 }
