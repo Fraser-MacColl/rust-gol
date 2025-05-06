@@ -142,6 +142,54 @@ impl Region {
         self.state[x][y] = state;
     }
 
+    /// Fill any overlapping space in the provided region with this regions state.
+    /// Other cells are ignored and unaffected.
+    pub fn populate_overlap(&self, other: &mut Region) {
+        // Check it is in bounds before doing further calculations
+        if !self.is_overlapping(other) { return; }
+
+        // Iterate through coordinates in other and try to get cell from this
+        // If problematically slow, overlapping region could be calculated and
+        // iterated through instead of full region.
+        for x in other.x..other.x.saturating_add_unsigned(other.width) {
+            for y in other.y..other.y.saturating_add_unsigned(other.width) {
+                let Some(state) = self.get_cell(x, y) else { continue };
+                other.set_cell(x, y, state);
+            }
+        }
+    }
+
+    /// Check if another region overlaps this one.
+    fn is_overlapping(&self, other: &Region) -> bool {
+        // If at least one corner is in bounds, then it is overlapping
+        if self.contains_region_corners(other) { return true }
+
+        // If other completely wraps around this region, above won't work in this direction
+        // so check in other direction too
+        if other.contains_region_corners(self) { return true }
+
+        // No corner was inbounds, so no overlap
+        false
+    }
+
+    /// Checks if any of the corners of the other region are contained within this region.
+    fn contains_region_corners(&self, other: &Region) -> bool {
+        let final_x = other.x.saturating_add_unsigned(other.width) - 1;
+        let final_y = other.y.saturating_add_unsigned(other.height) - 1;
+        let corners = [
+            (other.x, other.y),
+            (other.x, final_y),
+            (final_x, other.y),
+            (final_x, final_y)
+        ];
+
+        for (x, y) in corners {
+            if self.pos_in_bounds(x, y) { return true }
+        }
+
+        false
+    }
+
     /// Change the size of the region by moving the specified edge.
     /// The amount value is the change in size, not position of the chosen edge.
     /// As such, a positive value even on a negative edge (such as [`Edge::NegX`] or [`Edge::NegY`])
@@ -340,6 +388,67 @@ mod region_tests {
         assert_eq!(Cell::Alive, region.state[0][10]);
         region.set_cell(2, -4, Cell::Alive);
         assert_eq!(Cell::Alive, region.state[7][1]);
+    }
+
+    #[test]
+    fn populate_overlap() {
+        // Base region of all alive cells, -5 -5 to 5 5 inclusive
+        let mut base = Region::new(-5, -5, 11, 11);
+        for x in -5..=5 {
+            for y in -5..=5 {
+                base.set_cell(x, y, Cell::Alive)
+            }
+        }
+
+        let mut no_overlap = Region::new(10, 6, 3, 6);
+        base.populate_overlap(&mut no_overlap);
+        for x in 10..13 {
+            for y in 6..12 {
+                assert_eq!(no_overlap.get_cell(x, y).unwrap(), Cell::Dead)
+            }
+        }
+
+        let mut partial_overlap = Region::new(-8, 0, 7, 9);
+        base.populate_overlap(&mut partial_overlap);
+        for x in -8..-5 {
+            for y in 0..9 {
+                assert_eq!(partial_overlap.get_cell(x, y).unwrap(), Cell::Dead)
+            }
+        }
+        for x in -5..-1 {
+            for y in 0..=5 {
+                assert_eq!(partial_overlap.get_cell(x, y).unwrap(), Cell::Alive)
+            }
+            for y in 6..9 {
+                assert_eq!(partial_overlap.get_cell(x, y).unwrap(), Cell::Dead)
+            }
+        }
+
+        let mut complete_overlap = Region::new(-3, -3, 5, 5);
+        base.populate_overlap(&mut complete_overlap);
+        for x in -3..2 {
+            for y in -3..2 {
+                assert_eq!(complete_overlap.get_cell(x, y).unwrap(), Cell::Alive)
+            }
+        }
+    }
+
+    #[test]
+    fn is_overlapping() {
+        // Base region from -5 -5 to 5 5 inclusive
+        let base = Region::new(-5, -5, 11, 11);
+
+        let no_overlap = Region::new(10, 6, 3, 6);
+        assert!(!base.is_overlapping(&no_overlap));
+        assert!(!no_overlap.is_overlapping(&base));
+
+        let partial_overlap = Region::new(-8, 0, 7, 9);
+        assert!(base.is_overlapping(&partial_overlap));
+        assert!(partial_overlap.is_overlapping(&base));
+
+        let complete_overlap = Region::new(-3, -3, 5, 5);
+        assert!(base.is_overlapping(&complete_overlap));
+        assert!(complete_overlap.is_overlapping(&base));
     }
 
     #[test]
