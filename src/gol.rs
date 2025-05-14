@@ -87,6 +87,26 @@ impl GameOfLife {
         Cell::Dead
     }
 
+    /// Set the state of a cell in the world.
+    pub fn set_cell(&mut self, x: isize, y: isize, state: Cell) {
+        for region in &mut self.regions {
+            if region.pos_in_bounds(x, y) {
+                region.set_cell(x, y, state);
+                Self::resize_region(region);
+            }
+        }
+    }
+
+    /// Resizes provided to region to maintain dead cell buffer on edges.
+    fn resize_region(region: &mut Region) {
+        // TODO
+    }
+
+    /// Merge overlapping regions into single region
+    fn merge_overlapping_regions(&mut self) {
+        // TODO
+    }
+
     /// Populate the provided region with the state of the current world.
     pub fn populate_region(&self, region: &mut Region) {
         !unimplemented!()
