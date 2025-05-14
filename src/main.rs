@@ -1,5 +1,10 @@
+use crate::gol::GameOfLife;
+
 mod gol;
 
 fn main() {
-    println!("Hello, world!");
+
+    let game = GameOfLife::new();
+
+    game.debug_print();
 }

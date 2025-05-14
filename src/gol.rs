@@ -1,5 +1,7 @@
 //! Module to hold logic for the Game of Life simulation.
 
+use std::fmt::{Debug, Formatter};
+
 /// Enum to represent each cell in the Game of Life world.
 /// Each cell can only either be alive or dead, and this
 /// is codified by only having the two enum variants.
@@ -27,10 +29,44 @@ impl GameOfLife {
 
     /// Step the simulation to the next state.
     pub fn step(&mut self) {
-        !unimplemented!()
-        // Step each region
+        self.step_regions();
         // Split Regions that have disjoint cells
         // Merge regions that are too close
+    }
+
+    /// Step each region to calculate the next state.
+    fn step_regions(&mut self) {
+        for region in &mut self.regions {
+            for x in region.x .. region.x.saturating_add_unsigned(region.width) {
+                for y in region.y..region.y.saturating_add_unsigned(region.height) {
+                    Self::step_cell(region, x, y);
+                }
+            }
+        }
+    }
+
+    /// Function for logic run for each cell in given region
+    fn step_cell(region: &mut Region, x: isize, y: isize) {
+        let neighbor_offsets = [
+            (-1, -1), (0, -1), (1, -1),
+            (-1, 0),           (1, 0),
+            (-1, 1),  (0, 1),  (1, 1),
+        ];
+
+        let mut neighbours = 0;
+        for (x_off, y_off) in neighbor_offsets {
+            match region.get_cell(x + x_off, y + y_off) {
+                None | Some(Cell::Dead) => { continue }
+                Some(Cell::Alive) => { neighbours += 1;}
+            }
+        }
+
+        let current_state = region.get_cell(x, y).expect("Cell X Y position out of bounds");
+        region.set_cell(x, y, match (current_state, neighbours) {
+            (_, 3) => Cell::Alive,
+            (current, 2) => current,
+            _ => Cell::Dead
+        });
     }
 
     /// Check if a position is contained within a region of this world.
@@ -59,6 +95,33 @@ impl GameOfLife {
     /// Set the state of the world to that of the given region.
     pub fn set_region(&mut self, region: &Region) {
         !unimplemented!()
+    }
+
+    pub fn debug_print(&self) {
+        println!("Num Regions: {}", self.regions.len());
+        for region in &self.regions {
+            println!(
+                "{{ x: {}, y: {}, width: {}, height: {} }}",
+                region.x,
+                region.y,
+                region.width,
+                region.height
+            );
+
+            for y in region.y..region.y.saturating_add_unsigned(region.height) {
+                for x in region.x..region.x.saturating_add_unsigned(region.width) {
+                    print!(
+                        "{}",
+                        match region.get_cell(x, y) {
+                            None => "?",
+                            Some(Cell::Alive) => "1",
+                            Some(Cell::Dead) => "0"
+                        }
+                    );
+                }
+                println!();
+            }
+        }
     }
 }
 
